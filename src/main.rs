@@ -4,11 +4,13 @@ use std::{
     process::exit,
 };
 
+type Aligr = (Vec<(&'static str, &'static str)>, usize);
+
 fn align_normal(
     lines: &mut dyn Iterator<Item = String>,
     align_word: &str,
     is_taild: bool,
-) -> (Vec<(&'static str, &'static str)>, usize) {
+) -> Aligr {
     let mut max_align = 0;
     let mut lines_split = Vec::new();
 
@@ -28,6 +30,17 @@ fn align_normal(
     }
 
     (lines_split, max_align)
+}
+
+fn write_on(writer: &mut dyn Write, aligr: Aligr, word: &str) {
+    for (left, right) in aligr.0 {
+        writeln!(writer, "{:<width$}{}{}", left, word, right, width = aligr.1).unwrap_or_else(
+            |err| {
+                eprintln!("Error writing to stdout: {}", err);
+                exit(1);
+            },
+        )
+    }
 }
 
 fn main() {
@@ -52,25 +65,10 @@ fn main() {
         false
     };
 
-    let (lines_split, max_align) =
-        align_normal(&mut stdin().lines().flatten(), &align_word, is_taild);
-
+    let aligr = align_normal(&mut stdin().lines().flatten(), &align_word, is_taild);
     let mut stdout = stdout().lock();
 
-    for (left, right) in lines_split {
-        writeln!(
-            stdout,
-            "{:<width$}{}{}",
-            left,
-            align_word,
-            right,
-            width = max_align
-        )
-        .unwrap_or_else(|err| {
-            eprintln!("Error writing to stdout: {}", err);
-            exit(1);
-        })
-    }
+    write_on(&mut stdout, aligr, &align_word);
 }
 
 #[cfg(test)]
@@ -121,5 +119,47 @@ mod tests {
 
         assert_eq!(lines_split[2].0, "Hello, ");
         assert_eq!(lines_split[2].1, "!");
+    }
+
+    #[test]
+    fn test_write_on() {
+        let mut lines = vec![
+            "Hello, world world!".to_string(),
+            "Hello, world!".to_string(),
+            "Hello, world!".to_string(),
+        ]
+        .into_iter();
+
+        let aligr = align_normal(&mut lines, "world", false);
+
+        let mut output = Vec::new();
+
+        write_on(&mut output, aligr, "world");
+
+        assert_eq!(
+            String::from_utf8(output).unwrap(),
+            "Hello, world world!\nHello, world!\nHello, world!\n"
+        );
+    }
+
+    #[test]
+    fn test_write_on_taild() {
+        let mut lines = vec![
+            "Hello, world world!".to_string(),
+            "Hello, world!".to_string(),
+            "Hello, world!".to_string(),
+        ]
+        .into_iter();
+
+        let aligr = align_normal(&mut lines, "world", true);
+
+        let mut output = Vec::new();
+
+        write_on(&mut output, aligr, "world");
+
+        assert_eq!(
+            String::from_utf8(output).unwrap(),
+            "Hello, world world!\nHello,       world!\nHello,       world!\n"
+        );
     }
 }
