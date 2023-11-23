@@ -6,11 +6,7 @@ use std::{
 
 type Aligr = (Vec<(&'static str, &'static str)>, usize);
 
-fn align_normal(
-    lines: &mut dyn Iterator<Item = String>,
-    align_word: &str,
-    is_taild: bool,
-) -> Aligr {
+fn aligr(lines: &mut dyn Iterator<Item = String>, align_word: &str, is_taild: bool) -> Aligr {
     let mut max_align = 0;
     let mut lines_split = Vec::new();
 
@@ -65,7 +61,7 @@ fn main() {
         false
     };
 
-    let aligr = align_normal(&mut stdin().lines().flatten(), &align_word, is_taild);
+    let aligr = aligr(&mut stdin().lines().flatten(), &align_word, is_taild);
     let mut stdout = stdout().lock();
 
     write_on(&mut stdout, aligr, &align_word);
@@ -84,7 +80,7 @@ mod tests {
         ]
         .into_iter();
 
-        let (lines_split, max_align) = align_normal(&mut lines, "world", false);
+        let (lines_split, max_align) = aligr(&mut lines, "world", false);
 
         assert_eq!(max_align, 7);
 
@@ -107,7 +103,7 @@ mod tests {
         ]
         .into_iter();
 
-        let (lines_split, max_align) = align_normal(&mut lines, "world", true);
+        let (lines_split, max_align) = aligr(&mut lines, "world", true);
 
         assert_eq!(max_align, 13);
 
@@ -130,7 +126,7 @@ mod tests {
         ]
         .into_iter();
 
-        let aligr = align_normal(&mut lines, "world", false);
+        let aligr = aligr(&mut lines, "world", false);
 
         let mut output = Vec::new();
 
@@ -151,7 +147,7 @@ mod tests {
         ]
         .into_iter();
 
-        let aligr = align_normal(&mut lines, "world", true);
+        let aligr = aligr(&mut lines, "world", true);
 
         let mut output = Vec::new();
 
